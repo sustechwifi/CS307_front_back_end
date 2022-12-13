@@ -1,2 +1,8 @@
-# CS307_front_back_end
-### for CS307 proj front-end and back-end
+# CS307 project front-back-end
+
+### sustech CS307 proj front-end and back-end
+
+---
+
+
+
