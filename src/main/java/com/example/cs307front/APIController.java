@@ -1,12 +1,11 @@
 package com.example.cs307front;
 
 import com.alibaba.fastjson2.JSON;
-import com.example.cs307front.interfaces.ItemInfo;
-import com.example.cs307front.interfaces.ItemState;
-import com.example.cs307front.interfaces.LogInfo;
-import com.example.cs307front.service.DatabaseManipulation;
-import com.example.cs307front.utils.SqlFactory;
+import main.interfaces.ItemInfo;
+import main.interfaces.LogInfo;
 import org.springframework.web.bind.annotation.*;
+import main.service.DatabaseManipulation;
+import main.utils.SqlFactory;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -59,16 +58,14 @@ public class APIController {
                         }
                     }
             );
-            String token = "-1";
+            String token;
             if (me != null) {
                 token = UUID.randomUUID().toString();
-                System.out.println(token);
                 users.put(token, me);
                 return Result.ok(me, token);
             } else {
                 return Result.error("wrong name or password");
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
             return Result.error(e.getMessage());
@@ -87,13 +84,8 @@ public class APIController {
     }
 
     @GetMapping("/api1")
-    public Result<?> api1(@RequestParam("database") String database,
-                          @RequestParam("root") String root,
+    public Result<?> api1(@RequestParam("database") String database, @RequestParam("root") String root,
                           @RequestParam("pass") String pass) {
-        importReady = new DatabaseManipulation(database, root, pass);
-        if (importReady.connection == null){
-            return Result.error("connect fail!");
-        }
         return Result.ok("connect successful");
     }
 
