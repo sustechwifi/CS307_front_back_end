@@ -148,8 +148,6 @@ public class APIController {
 
     @GetMapping("/api12")
     public Result<?> api12(@RequestParam("logInfo") String log, @RequestParam("name") String name, @RequestParam("s") Integer s) {
-        System.out.println(log);
-        System.out.println(s);
         return Result.ok(databaseManipulation.setItemState(JSON.parseObject(log, LogInfo.class), name, SqlFactory.mapState(s)));
     }
 
