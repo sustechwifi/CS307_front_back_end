@@ -9,6 +9,7 @@ import main.utils.SqlFactory;
 
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -86,7 +87,7 @@ public class APIController {
     @PostMapping("/api1")
     public Result<?> api1(@RequestBody RootFrom root) {
         try {
-            databaseManipulation = new DatabaseManipulation(root.getDatabase(),root.getUsername(),root.getPassword());
+            databaseManipulation = new DatabaseManipulation(root.getDatabase(), root.getUsername(), root.getPassword());
             return Result.ok("connect successful");
         } catch (Exception e) {
             e.printStackTrace();
@@ -97,11 +98,11 @@ public class APIController {
     @GetMapping("/api2")
     public Result<?> api2(@RequestParam("recordsCSV") String recordsCSV,
                           @RequestParam("staffsCSV") String staffsCSV) {
-        if (databaseManipulation == null){
+        if (databaseManipulation == null) {
             return Result.error("Constructor invoke first!");
         }
         try {
-            databaseManipulation.$import(recordsCSV,staffsCSV);
+            databaseManipulation.$import(recordsCSV, staffsCSV);
             return Result.ok("Import successfully");
         } catch (Exception e) {
             e.printStackTrace();
@@ -148,7 +149,6 @@ public class APIController {
     public Result<?> api10(@RequestParam("logInfo") String log, @RequestParam("name") String name) {
         return Result.ok(databaseManipulation.getStaffInfo(JSON.parseObject(log, LogInfo.class), name));
     }
-
 
 
     @PostMapping("/api11")
@@ -216,9 +216,89 @@ public class APIController {
     public Result<?> api21(@RequestParam("logInfo") String log, @RequestParam("itemName") String itemName, @RequestParam("success") Boolean success) {
         return Result.ok(databaseManipulation.setItemCheckState(JSON.parseObject(log, LogInfo.class), itemName, success));
     }
+
+    @GetMapping("/advance1")
+    public Result<?> getCompanyRate() {
+        try {
+            return Result.ok(SqlFactory.handleMultipleResult(
+
+                    SqlFactory.handleQuery("""
+                             select count(r.id) , (select c.name from company c where c.id = r.company_id ) com
+                              from record r
+                              where r.state = 11 group by r.company_id;
+                            """),
+                    r -> new RateWrapper(r.getInt(1), r.getString(2)),
+                    list -> list
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/advance2")
+    public Result<?> getItemClassRate() {
+        try {
+            return Result.ok(SqlFactory.handleMultipleResult(
+                    SqlFactory.handleQuery("""
+                            select count(r.id) , r.item_class  from record r
+                            where r.state = 11 group by r.item_class;
+                            """),
+                    r -> new RateWrapper(r.getInt(1), r.getString(2)),
+                    list -> list
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/advance3")
+    public Result<?> getAllItemByCourier(@RequestParam("logInfo") String log,
+                                         @RequestParam("name") String courierName,
+                                         @RequestParam("page") Integer currentPage,
+                                         @RequestParam("size") Integer pageSize) {
+        String sql = """
+                select r.item_name from record r
+                where r.id in
+                      (select record_id from undertake where staff_id =
+                             (select s.id from staff s where s.type = 4 and s.name = ?))
+                limit ? offset ? ;
+                """;
+        String sql2 = """
+                select count(r.id) from record r
+                where r.id in
+                      (select record_id from undertake where staff_id =
+                             (select s.id from staff s where s.type = 4 and s.name = ?))
+                """;
+        LogInfo logInfo = JSON.parseObject(log, LogInfo.class);
+        try {
+            return Result.ok(new Advance3(
+                    SqlFactory.handleMultipleResult(
+                            SqlFactory.handleQuery(sql, courierName, pageSize, (currentPage - 1) * pageSize + 1),
+                            r -> databaseManipulation.getItemInfo(logInfo, r.getString(1)),
+                            list -> list)
+                    ,
+                    SqlFactory.handleSingleResult(
+                            SqlFactory.handleQuery(sql2, courierName),
+                            r -> r.getInt(1)
+                    )
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(e.getMessage());
+        }
+    }
+
 }
 
-class Api11{
+record RateWrapper(Integer value, String name) {
+}
+
+record Advance3(Object data, Integer count) {
+}
+
+class Api11 {
     private LogInfo logInfo;
     private ItemInfo item;
 
@@ -240,16 +320,16 @@ class Api11{
                 item.$class(),
                 item.price(),
                 null,
-                new ItemInfo.RetrievalDeliveryInfo(item.retrieval().city(),null),
+                new ItemInfo.RetrievalDeliveryInfo(item.retrieval().city(), null),
                 new ItemInfo.RetrievalDeliveryInfo(item.delivery().city(), null),
-                new ItemInfo.ImportExportInfo(item.$import().city(),null,item.$import().tax()),
-                new ItemInfo.ImportExportInfo(item.export().city(),null,item.export().tax())
+                new ItemInfo.ImportExportInfo(item.$import().city(), null, item.$import().tax()),
+                new ItemInfo.ImportExportInfo(item.export().city(), null, item.export().tax())
         );
     }
 
 }
 
-class RootFrom{
+class RootFrom {
     private String database;
     private String username;
     private String password;
