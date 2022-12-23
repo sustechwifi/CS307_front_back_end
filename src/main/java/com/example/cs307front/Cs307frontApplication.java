@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication
-@SqlSupport(URL = "jdbc:postgresql://127.0.0.1:5432/sustc2?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatement=true")
+@SqlSupport
 public class Cs307frontApplication {
     public static void main(String[] args) {
         JdbcUtil.getConnection(Cs307frontApplication.class);

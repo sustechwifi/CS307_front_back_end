@@ -1,6 +1,6 @@
-# CS307 project front-back-end
+# CS307 2022-fall project front-back-end
 
-### sustech CS307 proj front-end and back-end
+### project front-end and back-end
 
 ---
 

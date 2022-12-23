@@ -19,7 +19,6 @@ public class APIController {
     DatabaseManipulation databaseManipulation = new DatabaseManipulation();
 
     static Map<String, LogInfo> users = new HashMap<>(10);
-    static DatabaseManipulation importReady;
 
     @PostMapping("/login")
     public Result<?> login(@RequestBody LogInfo staff) {
@@ -83,20 +82,31 @@ public class APIController {
         }
     }
 
-    @GetMapping("/api1")
-    public Result<?> api1(@RequestParam("database") String database, @RequestParam("root") String root,
-                          @RequestParam("pass") String pass) {
-        return Result.ok("connect successful");
+
+    @PostMapping("/api1")
+    public Result<?> api1(@RequestBody RootFrom root) {
+        try {
+            databaseManipulation = new DatabaseManipulation(root.getDatabase(),root.getUsername(),root.getPassword());
+            return Result.ok("connect successful");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(e.getMessage());
+        }
     }
 
     @GetMapping("/api2")
     public Result<?> api2(@RequestParam("recordsCSV") String recordsCSV,
                           @RequestParam("staffsCSV") String staffsCSV) {
-        if (importReady == null){
+        if (databaseManipulation == null){
             return Result.error("Constructor invoke first!");
         }
-        importReady.$import(recordsCSV,staffsCSV);
-        return Result.ok("---");
+        try {
+            databaseManipulation.$import(recordsCSV,staffsCSV);
+            return Result.ok("Import successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(e.getMessage());
+        }
     }
 
     @GetMapping("/api3")
@@ -237,4 +247,40 @@ class Api11{
         );
     }
 
+}
+
+class RootFrom{
+    private String database;
+    private String username;
+    private String password;
+
+    public RootFrom(String database, String username, String password) {
+        this.database = database;
+        this.username = username;
+        this.password = password;
+    }
+
+    public String getDatabase() {
+        return database;
+    }
+
+    public void setDatabase(String database) {
+        this.database = database;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }
